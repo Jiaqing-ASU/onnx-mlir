@@ -12,8 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "src/Conversion/ONNXToMhlo/DialectBuilder.hpp"
 #include "src/Conversion/ONNXToMhlo/ONNXToMhloCommon.hpp"
-#include "src/Dialect/ONNX/ShapeInference/ONNXShapeHelper.hpp"
+#include "src/Dialect/ONNX/ONNXOps/ShapeHelper.hpp"
 #include "src/Support/TypeUtilities.hpp"
 
 using namespace mlir;
@@ -66,11 +67,10 @@ struct ONNXArgMaxOpLoweringToMhlo : public ConversionPattern {
     ONNXArgMaxOpAdaptor operandAdaptor(operands);
     ONNXArgMaxOp argMaxOp = llvm::cast<ONNXArgMaxOp>(op);
 
-    // shape helper
-    ONNXArgMaxOpShapeHelper shapeHelper(&argMaxOp);
-    LogicalResult shapecomputed = shapeHelper.computeShape(operandAdaptor);
-    (void)shapecomputed;
-    assert(!failed(shapecomputed) && "shape helper failed");
+    // Shape helper (not really used).
+    IndexExprBuilderForMhlo createIE(rewriter, loc);
+    ONNXArgMaxOpShapeHelper shapeHelper(op, operands, &createIE);
+    shapeHelper.computeShapeAndAssertOnFailure();
 
     Type outputType = *op->result_type_begin();
     assert(isRankedShapedType(outputType) && "Expected Ranked ShapedType");
@@ -116,7 +116,7 @@ struct ONNXArgMaxOpLoweringToMhlo : public ConversionPattern {
         llvm::ArrayRef<Value>(dataOperands), llvm::ArrayRef<Value>(initValues),
         reductionDimensions);
     BuildArgmaxReductionBody(
-        elementType, indexElementType, &reduction.body(), &rewriter);
+        elementType, indexElementType, &reduction.getBody(), &rewriter);
 
     Value result = reduction.getResult(1);
     if (isKeepdims) {

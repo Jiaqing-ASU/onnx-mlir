@@ -1,3 +1,4 @@
+
 # SPDX-License-Identifier: Apache-2.0
 
 add_subdirectory(jni)
@@ -14,6 +15,7 @@ add_onnx_mlir_library(cruntime STATIC
   OMInstrument.c
   OMRandomNormal.c
   OMResize.c
+  OMSort.c
   OMTensor.c
   OMTensorList.c
   OnnxDataType.c
@@ -37,6 +39,7 @@ add_onnx_mlir_library(OMTensorUtils
   OMInstrument.cpp
   OMRandomNormal.cpp
   OMResize.cpp
+  OMSort.cpp
   OMTensor.cpp
   OMTensorList.cpp
   OnnxDataType.cpp
@@ -54,7 +57,7 @@ set_target_properties(OMTensorUtils
   POSITION_INDEPENDENT_CODE TRUE
   )
 
-add_onnx_mlir_library(ExecutionSession
+add_onnx_mlir_library(OMExecutionSession
   ExecutionSession.cpp
 
   EXCLUDE_FROM_OM_LIBS
@@ -63,7 +66,7 @@ add_onnx_mlir_library(ExecutionSession
   OMTensorUtils
   LLVMSupport
   )
-set_target_properties(ExecutionSession
+set_target_properties(OMExecutionSession
   PROPERTIES
   POSITION_INDEPENDENT_CODE TRUE
   )
@@ -83,7 +86,7 @@ set_target_properties(ExecutionSession
 #   - onnx_cpp2py_export.cpython-39-s390x-linux-gnu.so
 #     (import onnx)
 #   - PyRuntime.cpython-39-s390x-linux-gnu.so
-#     (from PyRuntime import ExecutionSession)
+#     (from PyRuntime import OMExecutionSession)
 #
 # Both libs share the same libprotobuf.so when loaded by test.py.
 # However, they were both built with the same onnx-ml.pb.cc generated
@@ -112,7 +115,7 @@ target_include_directories(PyRuntime
   )
 target_link_libraries(PyRuntime
   PRIVATE
-  ExecutionSession
+  OMExecutionSession
   )
 llvm_update_compile_flags(PyRuntime)
 
@@ -138,8 +141,8 @@ target_include_directories(PyCompileAndRuntime
   )
 target_link_libraries(PyCompileAndRuntime
   PRIVATE
-  OnnxMlirCompiler
-  ExecutionSession
+  OMCompiler
+  OMExecutionSession
   )
 llvm_update_compile_flags(PyCompileAndRuntime)
 

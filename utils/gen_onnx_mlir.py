@@ -3,6 +3,7 @@
 # After modifying this file, the script will need to run to rebuild the
 # onnx-mlir ONNX Dialect. This is performed by calling
 # `make OMONNXOpsIncTranslation` in the build dir.
+# If the changes are not seen, then you need to rebuild the entire onnx-mlir.
 
 # After changes that impact the documentation of the ops, run
 # "make onnx-mlir-docs".
@@ -46,7 +47,7 @@ parser.add_argument("--check-operation-version",
                     action="store_true",
                     default=False)
 parser.add_argument("--list-operation-version",
-                    help="list the version stored in  version_dicts without performing checks",
+                    help="list the version stored in version_dicts without performing checks",
                     action="store_true",
                     default=False)
 
@@ -56,7 +57,7 @@ check_operation_version = args.check_operation_version
 list_operation_version = args.list_operation_version
 
 # Change this variable only when upgrading the ONNX support within ONNX-MLIR.
-current_onnx_version = "1.11.0"
+current_onnx_version = "1.13.0"
 
 # Check the version of onnx package being used.
 if (not check_operation_version and not list_operation_version) and current_onnx_version != onnx.__version__ :
@@ -69,7 +70,7 @@ if (not check_operation_version and not list_operation_version) and current_onnx
 # run this script with --check-operation-version flag.
 # Update this dictionary when a newer version is implemented
 # TODO: how to keep the old version
- 
+
 version_dict = {
  'Abs': [13],
  'Acos': [7],
@@ -90,12 +91,18 @@ version_dict = {
  'Bernoulli': [15],
  'Binarizer': [1],
  'BitShift': [11],
+ 'BitwiseAnd': [18],
+ 'BitwiseNot': [18],
+ 'BitwiseOr': [18],
+ 'BitwiseXor': [18],
+ 'BlackmanWindow': [17],
  'Cast': [13],
  'CastLike': [15],
  'CastMap': [1],
  'CategoryMapper': [1],
  'Ceil': [13],
  'Celu': [12],
+ 'CenterCropPad': [18],
  'Clip': [13, 12, 11, 6],
  'Compress': [11],
  'Concat': [13],
@@ -107,10 +114,12 @@ version_dict = {
  'ConvTranspose': [11],
  'Cos': [7],
  'Cosh': [9],
+ 'Col2Im': [18],
  'CumSum': [14],
  'DepthToSpace': [13],
  'DequantizeLinear': [13],
  'Det': [11],
+ 'DFT': [17],
  'DictVectorizer': [1],
  'Div': [14],
  'Dropout': [13],
@@ -137,6 +146,9 @@ version_dict = {
  'Greater': [13],
  'GreaterOrEqual': [16],
  'GridSample': [16],
+ 'GroupNormalization': [18],
+ 'HammingWindow': [17],
+ 'HannWindow': [17],
  'HardSigmoid': [6],
  'Hardmax': [13],
  'HardSwish': [14],
@@ -146,6 +158,7 @@ version_dict = {
  'InstanceNormalization': [6],
  'IsInf': [10],
  'IsNaN': [13],
+ 'LayerNormalization': [17],
  'LRN': [13],
  'LSTM': [14],
  'LabelEncoder': [2],
@@ -167,7 +180,9 @@ version_dict = {
  'MaxUnpool': [11],
  'Mean': [13],
  'MeanVarianceNormalization': [13],
+ 'MelWeightMatrix': [17],
  'Min': [13],
+ 'Mish': [18],
  'Mod': [13],
  'Momentum': [1],
  'Mul': [14],
@@ -181,8 +196,8 @@ version_dict = {
  'OneHot': [11],
  'OneHotEncoder': [1],
  'Optional' : [15],
- 'OptionalGetElement' : [15],
- 'OptionalHasElement' : [15],
+ 'OptionalGetElement' : [18],
+ 'OptionalHasElement' : [18],
  'Or': [7],
  'PRelu': [16],
  'Pad': [13, 11, 2],
@@ -218,8 +233,8 @@ version_dict = {
  'Scaler': [1],
  'Scan': [16],
  'Scatter': [11],
- 'ScatterElements': [16],
- 'ScatterND': [16],
+ 'ScatterElements': [18],
+ 'ScatterND': [18],
  'Selu': [6],
  'SequenceAt': [11],
  'SequenceConstruct': [11],
@@ -227,6 +242,7 @@ version_dict = {
  'SequenceErase': [11],
  'SequenceInsert': [11],
  'SequenceLength': [11],
+ 'SequenceMap': [17],
  'Shape': [15],
  'Shrink': [9],
  'Sigmoid': [13],
@@ -235,7 +251,7 @@ version_dict = {
  'Sinh': [9],
  'Size': [13],
  'Slice': [13],
- 'Softmax': [13],
+ 'Softmax': [13, 11],
  'SoftmaxCrossEntropyLoss': [13],
  'Softplus': [1],
  'Softsign': [1],
@@ -245,6 +261,7 @@ version_dict = {
  'Sqrt': [13],
  'Squeeze': [13, 11],
  'StringNormalizer': [10],
+ 'STFT': [17],
  'Sub': [14],
  'Sum': [13],
  'Tan': [7],
@@ -259,7 +276,7 @@ version_dict = {
  'TreeEnsembleRegressor': [1],
  'Unique': [11],
  'Unsqueeze': [13, 11],
- 'Upsample': [10, 9, 7],
+ 'Upsample': [9, 7],
  'Where': [16],
  'Xor': [7],
  'ZipMap': [1]}
@@ -282,8 +299,12 @@ special_op_handler = dict([
     ("MaxPool", "ImportNodeMaxPool"),
     ("Pad", "ImportNodePad"),
     ("Slice", "ImportNodeSlice"),
-    ("Softmax", "ImportNodeSoftmax")
 ])
+
+# Operations with custom assembly format (alphabetical order).
+OpsWithCustomAssemblyFormat = [
+    'Constant',
+]
 
 # Operations supporting canonicalization (alphabetical order).
 OpsWithCanonicalizer = [
@@ -304,6 +325,7 @@ OpsWithCanonicalizer = [
     'RNN',
     'Shape',
     'Size',
+    'SoftmaxV11',
     'SpaceToDepth',
     'Squeeze',
     'SqueezeV11',
@@ -314,10 +336,16 @@ OpsWithCanonicalizer = [
 
 # Operations with custom verifiers (alphabetical order).
 OpsWithVerifier = [
-    'AveragePool',
+    'Add',
+    'And',
     'ArgMax',
     'ArgMin',
-    'CategoryMapper',    
+    'AveragePool',
+    'BitShift',
+    'BitwiseAnd',
+    'BitwiseOr',
+    'BitwiseXor',
+    'CategoryMapper',
     'Compress',
     'Concat',
     'ConcatFromSequence',
@@ -325,30 +353,43 @@ OpsWithVerifier = [
     'Conv',
     'DepthToSpace',
     'DequantizeLinear',
+    'Div',
     'Einsum',
+    'Equal',
     'Expand',
     'Flatten',
     'Gather',
     'GatherElements',
-    'GatherND',        
+    'GatherND',
+    'Greater',
+    'GreaterOrEqual',
     'Hardmax',
     'If',
     'InstanceNormalization',
+    'Less',
+    'LessOrEqual',
     'LogSoftmax',
+    'Max',
+    'Mean',
+    'Min',
     'Mod',
+    'Mul',
     'NonMaxSuppression',
     'OneHot',
     'OneHotEncoder',
     'Optional',
     'OptionalGetElement',
     'OptionalHasElement',
+    'Or',
+    'PRelu',
     'Pad',
     'Pow',
-    'PRelu',
     'RandomNormalLike',
+    'Range',
+    'Resize',
     'ReverseSequence',
-    "RoiAlign",
-    "ScatterElements",
+    'RoiAlign',
+    'ScatterElements',
     'ScatterND',
     'SequenceEmpty',
     'SequenceInsert',
@@ -356,13 +397,17 @@ OpsWithVerifier = [
     'SpaceToDepth',
     'Split',
     'SplitToSequence',
+    'Sub',
+    'Sum',
     'TopK',
     'Unique',
-    'Upsample'
+    'Upsample',
+    'Where',
+    'Xor'
 ]
 
 # Op with Helper functions
-# Here the functions are for data flow analysis. 
+# Here the functions are for data flow analysis.
 OpsWithHelpers = {
   "Loop": """
     mlir::Operation::result_range v_final();
@@ -395,7 +440,25 @@ OpsWithResultTypeInference = {
       } else {
         resultTypes.push_back(mlir::UnrankedTensorType::get(
           FloatType::getF32(getContext())));
-      }'''
+      }''',
+  "RandomNormal":
+  '''if (auto attr = dtypeAttr()) {
+      if (dtype() == 0) {
+        resultTypes.push_back(mlir::UnrankedTensorType::get(
+            FloatType::getF16(getContext())));
+      } else if (dtype() == 1) {
+        resultTypes.push_back(mlir::UnrankedTensorType::get(
+            FloatType::getF32(getContext())));
+      } else if (dtype() == 2) {
+        resultTypes.push_back(mlir::UnrankedTensorType::get(
+            FloatType::getF64(getContext())));
+      } else {
+        llvm_unreachable("dtype not supported for RandomNormal");
+      }
+    } else {
+        resultTypes.push_back(mlir::UnrankedTensorType::get(
+            FloatType::getF32(getContext())));
+    }'''
 }
 
 # Add an Op in this list if the Op needs result type deduction which is required
@@ -948,7 +1011,7 @@ def gen_op_def(schema, with_version = False):
           regions[attr.name] = "AnyRegion"
 
     # Generate decl for op traits.
-    traits = ["NoSideEffect"]
+    traits = ["Pure"]
     # OpsWithShapeInference:
     # Now the ShapeInference traits are added to all operation.
     # Dummy implementations are added to ONNXOps.cpp.
@@ -960,8 +1023,13 @@ def gen_op_def(schema, with_version = False):
         traits.append("OpInterface<\"HasOnnxSubgraphOpInterface\">")
     s += inc_indent(indent) + '[{}]> {{\n'.format(join_args(traits))
 
-    # Generate decl for canonicalizer.
     indent = inc_indent(indent)
+
+    # Generate decl for custom assembly format.
+    if opName in OpsWithCustomAssemblyFormat:
+        s += indent + 'let hasCustomAssemblyFormat = 1;\n'
+
+    # Generate decl for canonicalizer.
     if opName in OpsWithCanonicalizer:
         s += indent + 'let hasCanonicalizer = 1;\n'
 

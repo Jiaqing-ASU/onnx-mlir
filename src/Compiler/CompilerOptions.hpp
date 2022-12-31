@@ -17,12 +17,23 @@
 #include "src/Accelerators/Accelerator.hpp"
 #include "llvm/Support/CommandLine.h"
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
+
+#define DEFAULT_INSTRUMENTSTAGE_CL_ENUM clEnumVal(Onnx, "Profile for onnx ops.")
 
 extern const std::string OnnxMlirEnvOptionName;
 
 namespace onnx_mlir {
+
+typedef enum {
+  // clang-format off
+  Onnx
+  APPLY_TO_ACCELERATORS(ACCEL_INSTRUMENTSTAGE_ENUM)
+  // clang-format on
+} InstrumentStages;
+
 // Options for onnx-mlir only.
 extern llvm::cl::OptionCategory OnnxMlirOptions;
 // Common options shared between onnx-mlir and onnx-mlir-opt.
@@ -50,7 +61,8 @@ extern llvm::cl::opt<std::string> mllvm;
 extern llvm::cl::opt<bool> verifyInputTensors;
 extern llvm::cl::opt<bool> allowSorting;
 
-extern llvm::cl::opt<std::string> instrumentONNXOps;
+extern llvm::cl::opt<InstrumentStages> instrumentStage;
+extern llvm::cl::opt<std::string> instrumentOps;
 extern llvm::cl::bits<InstrumentActions> instrumentControlBits;
 extern llvm::cl::opt<bool> instrumentONNXSignature;
 extern llvm::cl::opt<std::string> ONNXOpStats;

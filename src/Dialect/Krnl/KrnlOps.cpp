@@ -21,7 +21,7 @@
 #include "llvm/ADT/TypeSwitch.h"
 
 #include "src/Dialect/Krnl/KrnlOps.hpp"
-#include "src/Dialect/ONNX/ONNXOpsHelper.hpp"
+#include "src/Dialect/ONNX/ONNXOps/OpHelper.hpp"
 
 using namespace mlir;
 using namespace onnx_mlir;
@@ -510,16 +510,11 @@ void KrnlEntryPointOp::build(mlir::OpBuilder &builder, OperationState &state,
 void KrnlInstrumentOp::build(mlir::OpBuilder &builder, OperationState &state,
     Operation *op, int tag = 0) {
   const char *opName = op->getName().getStringRef().data();
-  int64_t opID = 0;
-  // getName() result is "onnx.opName"
-  // Put only the opName part in the opID within its size
-  strncpy((char *)&opID, opName + 5, sizeof(decltype(opID)) - 1);
   StringAttr opNameAttr = builder.getStringAttr(StringRef(opName));
-  IntegerAttr opIDAttr = builder.getI64IntegerAttr(opID);
   IntegerAttr tagAttr = builder.getI64IntegerAttr(tag);
   StringAttr nodeNameAttr =
       op->getAttrOfType<::mlir::StringAttr>("onnx_node_name");
-  build(builder, state, opNameAttr, opIDAttr, tagAttr, nodeNameAttr);
+  build(builder, state, opNameAttr, tagAttr, nodeNameAttr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -883,7 +878,7 @@ void KrnlSeqExtractOp::getEffects(
 
 Optional<Operation *> KrnlSeqExtractOp::buildDealloc(
     OpBuilder &builder, Value alloc) {
-  auto loc = alloc.getLoc();
+  Location loc = alloc.getLoc();
   MultiDialectBuilder<MemRefBuilder> create(builder, loc);
   return create.mem.dealloc(alloc).getOperation();
 }
@@ -908,7 +903,7 @@ void KrnlSeqAllocOp::getEffects(
 
 Optional<Operation *> KrnlSeqAllocOp::buildDealloc(
     OpBuilder &builder, Value alloc) {
-  auto loc = alloc.getLoc();
+  Location loc = alloc.getLoc();
   // MultiDialectBuilder<KrnlBuilder> create(builder, loc);
   return builder.create<KrnlSeqDeallocOp>(loc, alloc).getOperation();
 }

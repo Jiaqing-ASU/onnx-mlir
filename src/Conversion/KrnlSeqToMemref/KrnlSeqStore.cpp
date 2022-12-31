@@ -40,14 +40,14 @@ public:
   LogicalResult matchAndRewrite(Operation *op, ArrayRef<Value> operands,
       ConversionPatternRewriter &rewriter) const override {
     KrnlSeqStoreOpAdaptor operandAdaptor(operands);
-    auto loc = op->getLoc();
+    Location loc = op->getLoc();
     MultiDialectBuilder<MathBuilder, MemRefBuilder> create(rewriter, loc);
 
     // Allocate a new tensor and copy input tensor into it
     auto inputType = operandAdaptor.input().getType().cast<MemRefType>();
     SmallVector<mlir::Value, 4> allocParams;
     for (size_t i = 0; i < inputType.getShape().size(); i++) {
-      if (inputType.getShape()[i] == -1) {
+      if (inputType.isDynamicDim(i)) {
         allocParams.emplace_back(create.mem.dim(operandAdaptor.input(), i));
       }
     }

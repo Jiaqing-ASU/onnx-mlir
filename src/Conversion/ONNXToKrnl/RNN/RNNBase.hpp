@@ -138,7 +138,7 @@ struct ONNXRNNOpLowering : public mlir::ConversionPattern {
   mlir::LogicalResult matchAndRewrite(mlir::Operation *op,
       llvm::ArrayRef<mlir::Value> operands,
       mlir::ConversionPatternRewriter &rewriter) const final {
-    auto loc = op->getLoc();
+    mlir::Location loc = op->getLoc();
 
     RNNOp rnnOp = llvm::dyn_cast<RNNOp>(op);
     typename RNNOp::Adaptor operandAdaptor(operands);
@@ -179,7 +179,7 @@ struct ONNXRNNOpLowering : public mlir::ConversionPattern {
       mlir::ValueRange loopDef = createKrnl.defineLoops(1);
       llvm::SmallVector<IndexExpr, 4> lbs(1, LiteralIndexExpr(0));
       llvm::SmallVector<IndexExpr, 4> ubs;
-      if (sequenceDimSize != -1)
+      if (!mlir::ShapedType::isDynamic(sequenceDimSize))
         ubs.emplace_back(LiteralIndexExpr(sequenceDimSize));
       else {
         MemRefBoundsIndexCapture bounds(X);
@@ -205,7 +205,7 @@ struct ONNXRNNOpLowering : public mlir::ConversionPattern {
       mlir::ValueRange loopDef = createKrnl.defineLoops(1);
       llvm::SmallVector<IndexExpr, 4> lbs(1, LiteralIndexExpr(0));
       llvm::SmallVector<IndexExpr, 4> ubs;
-      if (sequenceDimSize != -1)
+      if (!mlir::ShapedType::isDynamic(sequenceDimSize))
         ubs.emplace_back(LiteralIndexExpr(sequenceDimSize));
       else {
         MemRefBoundsIndexCapture bounds(X);
@@ -220,7 +220,7 @@ struct ONNXRNNOpLowering : public mlir::ConversionPattern {
             mlir::Value directionIV = create.math.constant(
                 rewriter.getIndexType(), (direction == REVERSE) ? 0 : 1);
             mlir::Value sequenceSize =
-                (sequenceDimSize != -1)
+                (!mlir::ShapedType::isDynamic(sequenceDimSize))
                     ? create.math.constant(
                           rewriter.getIndexType(), sequenceDimSize)
                     : create.mem.dim(X, 0);

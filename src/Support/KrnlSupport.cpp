@@ -221,7 +221,7 @@ bool hasAllConstantDimensions(MemRefType memRefType) {
 
 /// Get the MemRef element size in bytes.
 unsigned getMemRefEltSizeInBytes(MemRefType memRefType) {
-  auto elementType = memRefType.getElementType();
+  Type elementType = memRefType.getElementType();
 
   unsigned sizeInBits;
   if (elementType.isIntOrFloat()) {
@@ -273,7 +273,7 @@ Value getDynamicMemRefSizeInBytes(
       create.math.constant(rewriter.getI64Type(), staticSizeInBytes);
   if (!allStaticDimensions) {
     for (unsigned i = 0; i < shape.size(); i++) {
-      if (shape[i] == -1) {
+      if (ShapedType::isDynamic(shape[i])) {
         Value index = create.mem.dim(val, i);
         Value dim = rewriter.create<arith::IndexCastOp>(
             loc, rewriter.getI64Type(), index);

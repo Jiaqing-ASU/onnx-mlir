@@ -24,7 +24,7 @@
 
 #include "src/Dialect/ONNX/DialectBuilder.hpp"
 #include "src/Dialect/ONNX/ONNXOps.hpp"
-#include "src/Dialect/ONNX/ONNXOpsHelper.hpp"
+#include "src/Dialect/ONNX/ONNXOps/OpHelper.hpp"
 #include "src/Pass/Passes.hpp"
 #include "src/Transform/ONNX/ConstPropHelper.hpp"
 
@@ -41,7 +41,7 @@ namespace onnx_mlir {
 inline bool isTOSASignedInt(mlir::Type type) {
   mlir::IntegerType intType = type.dyn_cast<mlir::IntegerType>();
   std::set<unsigned> intWidth{8, 16, 32, 48, 64};
-  return intType && intType.isSigned() &&
+  return intType && intType.isSignless() &&
          (intWidth.find(intType.getWidth()) != intWidth.end());
 }
 
@@ -62,5 +62,7 @@ using TOSAOp = typename TOSADialectOp<Op>::Op;
 
 // `Math` directory methods:
 void populateLoweringONNXElementwiseOpToTOSAPattern(mlir::ConversionTarget &,
+    mlir::RewritePatternSet &, mlir::TypeConverter &, mlir::MLIRContext *);
+void populateLoweringONNXSoftmaxOpToTOSAPattern(mlir::ConversionTarget &,
     mlir::RewritePatternSet &, mlir::TypeConverter &, mlir::MLIRContext *);
 } // namespace onnx_mlir

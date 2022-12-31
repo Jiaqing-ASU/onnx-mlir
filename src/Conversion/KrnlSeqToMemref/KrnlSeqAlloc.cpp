@@ -42,13 +42,13 @@ public:
       ConversionPatternRewriter &rewriter) const override {
     KrnlSeqAllocOpAdaptor operandAdaptor(operands);
     KrnlSeqAllocOp thisOp = dyn_cast<KrnlSeqAllocOp>(op);
-    auto loc = op->getLoc();
+    Location loc = op->getLoc();
     MultiDialectBuilder<MathBuilder, MemRefBuilder> create(rewriter, loc);
 
     Value outputSeq = thisOp.getResult();
     auto outputType = outputSeq.getType().cast<MemRefType>();
     Value alloc;
-    if (outputType.getShape()[0] == -1)
+    if (outputType.isDynamicDim(0))
       alloc = create.mem.alloc(outputType, operandAdaptor.length());
     else
       alloc = create.mem.alloc(outputType);

@@ -12,8 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "src/Conversion/ONNXToMhlo/DialectBuilder.hpp"
 #include "src/Conversion/ONNXToMhlo/ONNXToMhloCommon.hpp"
-#include "src/Dialect/ONNX/ShapeInference/ONNXShapeHelper.hpp"
+#include "src/Dialect/ONNX/ONNXOps/ShapeHelper.hpp"
 #include "src/Support/TypeUtilities.hpp"
 
 using namespace mlir;
@@ -33,15 +34,15 @@ struct ONNXConvOpLoweringToMhlo : public ConversionPattern {
     ONNXConvOp convOp = llvm::dyn_cast<ONNXConvOp>(op);
     Location loc = op->getLoc();
 
-    ONNXConvOpShapeHelper shapeHelper(&convOp);
-    LogicalResult shapecomputed = shapeHelper.computeShape(operandAdaptor);
-    assert(succeeded(shapecomputed) && "Could not compute output shape");
+    IndexExprBuilderForMhlo createMhloIE(rewriter, loc);
+    ONNXConvOpShapeHelper shapeHelper(op, operands, &createMhloIE);
+    shapeHelper.computeShapeAndAssertOnFailure();
 
     llvm::SmallVector<IndexExpr, 2> kernelShape = shapeHelper.kernelShape;
     llvm::SmallVector<int64_t, 2> strides = shapeHelper.strides;
     llvm::SmallVector<int64_t, 2> dilations = shapeHelper.dilations;
-    DimsExpr outputDims = shapeHelper.dimsForOutput();
-    int outputRank = shapeHelper.dimsForOutput().size();
+    DimsExpr outputDims = shapeHelper.getOutputDims();
+    int outputRank = shapeHelper.getOutputDims().size();
 
     Value inputOperand = operandAdaptor.X();
     Value filterOperand = operandAdaptor.W();
